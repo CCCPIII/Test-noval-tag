@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # 数据库连接地址
     DATABASE_URL: str = "sqlite+aiosqlite:///./novel_tag.db"
     # Redis 连接地址
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_URL: str = ""
     # 文件上传目录
     UPLOAD_DIR: str = "./uploads"
     # 最大上传文件大小（MB）

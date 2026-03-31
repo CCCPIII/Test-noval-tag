@@ -18,6 +18,9 @@ class OpenAIClient(BaseAIClient):
         # 默认API地址
         if not self.api_url:
             self.api_url = "https://api.openai.com/v1/chat/completions"
+        # 自动补全 /chat/completions 路径
+        elif self.api_url.rstrip("/").endswith("/v1"):
+            self.api_url = self.api_url.rstrip("/") + "/chat/completions"
 
     def _build_headers(self) -> dict:
         """构建请求头"""
@@ -62,12 +65,23 @@ class OpenAIClient(BaseAIClient):
                     return text
 
             except (httpx.HTTPStatusError, httpx.RequestError, KeyError, IndexError) as exc:
-                last_exception = exc
-                wait_time = 2 ** attempt  # 1s, 2s, 4s 指数退避
+                # 提取API返回的错误详情
+                error_detail = str(exc)
+                if isinstance(exc, httpx.HTTPStatusError):
+                    try:
+                        error_body = exc.response.json()
+                        error_detail = error_body.get("error", {}).get("message", str(exc))
+                    except Exception:
+                        error_detail = exc.response.text or str(exc)
+                last_exception = error_detail
+                wait_time = 2 ** attempt
                 logger.warning(
                     "OpenAI API调用失败 (第%d次尝试): %s，%d秒后重试",
-                    attempt + 1, str(exc), wait_time,
+                    attempt + 1, error_detail, wait_time,
                 )
+                # 400 错误不需要重试（参数错误）
+                if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 400:
+                    break
                 if attempt < 2:
                     await asyncio.sleep(wait_time)
 
