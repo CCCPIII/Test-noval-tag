@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: novel-tag-system
+    runtime: python
+    buildCommand: bash build.sh
+    startCommand: cd backend && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: NODE_VERSION
+        value: "18"
+      - key: DATABASE_URL
+        value: "sqlite+aiosqlite:///./novel_tag.db"
+      - key: REDIS_URL
+        value: ""
