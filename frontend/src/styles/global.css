@@ -1,0 +1,147 @@
+/* ==========================================
+   AI小说总结与标签生成系统 - 全局样式
+   ========================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial,
+    sans-serif;
+  background-color: #f5f7fa;
+  color: #303133;
+}
+
+/* 布局 */
+.app-container {
+  height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid #e4e7ed;
+  height: 60px;
+}
+
+.app-header h1 {
+  font-size: 18px;
+  color: #303133;
+  font-weight: 600;
+}
+
+.app-aside {
+  background: #fff;
+  border-right: 1px solid #e4e7ed;
+}
+
+.app-main {
+  padding: 20px;
+  background: #f5f7fa;
+  overflow-y: auto;
+}
+
+/* 页面通用 */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #303133;
+}
+
+/* 标签维度颜色 */
+.tag-genre {
+  --el-tag-bg-color: #ecf5ff;
+  --el-tag-border-color: #d9ecff;
+  --el-tag-text-color: #409eff;
+}
+
+.tag-style {
+  --el-tag-bg-color: #f0f9eb;
+  --el-tag-border-color: #e1f3d8;
+  --el-tag-text-color: #67c23a;
+}
+
+.tag-element {
+  --el-tag-bg-color: #fdf6ec;
+  --el-tag-border-color: #faecd8;
+  --el-tag-text-color: #e6a23c;
+}
+
+.tag-character {
+  --el-tag-bg-color: #f4ecf7;
+  --el-tag-border-color: #e8d5f0;
+  --el-tag-text-color: #9b59b6;
+}
+
+.tag-exclusive {
+  --el-tag-bg-color: #fef0f0;
+  --el-tag-border-color: #fde2e2;
+  --el-tag-text-color: #f56c6c;
+}
+
+/* 争议标签样式 */
+.tag-controversial {
+  border-style: dashed !important;
+  cursor: help;
+}
+
+/* 卡片 */
+.content-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 标签组显示 */
+.tag-group {
+  margin-bottom: 12px;
+}
+
+.tag-group-label {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.tag-group .el-tag {
+  margin-right: 8px;
+  margin-bottom: 6px;
+}
+
+/* 进度条区域 */
+.progress-area {
+  padding: 20px;
+  text-align: center;
+}
+
+.progress-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #606266;
+}
