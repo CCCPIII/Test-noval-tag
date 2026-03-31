@@ -181,16 +181,36 @@ async def test_model_connection(
             "response_time_ms": None,
         }
 
+    # 解密 API Key
+    api_key = None
+    if model.api_key_encrypted:
+        try:
+            api_key = _decrypt_api_key(model.api_key_encrypted)
+        except Exception:
+            return {
+                "success": False,
+                "response_text": None,
+                "error_message": "API Key 解密失败",
+                "response_time_ms": None,
+            }
+
     start_time = time.time()
 
     try:
-        # TODO: 根据 model.provider 调用对应的 AI 接口进行测试
-        # 目前返回占位响应
+        from backend.ai.client_factory import create_ai_client
+        client = create_ai_client(
+            provider=model.provider,
+            api_url=model.api_url,
+            api_key=api_key,
+            model_identifier=model.model_identifier,
+            max_tokens=model.max_tokens,
+        )
+        response_text = await client.generate_text(test_prompt, max_tokens=100)
         elapsed_ms = (time.time() - start_time) * 1000
 
         return {
             "success": True,
-            "response_text": f"[占位响应] 模型 {model.name} 连接测试成功（待接入真实 AI 接口）",
+            "response_text": response_text,
             "error_message": None,
             "response_time_ms": round(elapsed_ms, 2),
         }

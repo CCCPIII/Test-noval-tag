@@ -18,6 +18,9 @@ class OpenAIClient(BaseAIClient):
         # 默认API地址
         if not self.api_url:
             self.api_url = "https://api.openai.com/v1/chat/completions"
+        # 自动补全 /chat/completions 路径
+        elif self.api_url.rstrip("/").endswith("/v1"):
+            self.api_url = self.api_url.rstrip("/") + "/chat/completions"
 
     def _build_headers(self) -> dict:
         """构建请求头"""
