@@ -10,13 +10,18 @@ from typing import AsyncGenerator
 from backend.core.config import settings
 
 # 创建异步数据库引擎
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-)
+_engine_kwargs = {
+    "echo": False,
+}
+# MySQL 支持连接池配置，SQLite 不支持
+if "sqlite" not in settings.DATABASE_URL:
+    _engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_size": 10,
+        "max_overflow": 20,
+    })
+
+engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs)
 
 # 异步会话工厂
 async_session = async_sessionmaker(

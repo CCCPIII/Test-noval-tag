@@ -177,7 +177,7 @@ async def test_model(
             )
 
         # 执行连接测试
-        result = await ai_model_service.test_connection(
+        result = await ai_model_service.test_model_connection(
             db=db,
             model_id=model_id,
             test_prompt=request.test_prompt,

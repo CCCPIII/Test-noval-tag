@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # 数据库连接地址
-    DATABASE_URL: str = "mysql+aiomysql://root:password@localhost:3306/novel_tag_db"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./novel_tag.db"
     # Redis 连接地址
     REDIS_URL: str = "redis://localhost:6379/0"
     # 文件上传目录

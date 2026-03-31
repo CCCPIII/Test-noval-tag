@@ -6,6 +6,7 @@ from typing import Optional, List
 
 class AIModelCreate(BaseModel):
     """创建AI模型配置"""
+    model_config = {"protected_namespaces": ()}
     name: str = Field(..., max_length=100, description="模型名称")
     provider: str = Field(..., description="提供商(openai/zhipu/local/custom)")
     api_url: str = Field(..., max_length=500, description="API接口地址")
@@ -20,6 +21,7 @@ class AIModelCreate(BaseModel):
 
 class AIModelUpdate(BaseModel):
     """更新AI模型配置"""
+    model_config = {"protected_namespaces": ()}
     name: Optional[str] = Field(None, max_length=100)
     provider: Optional[str] = None
     api_url: Optional[str] = Field(None, max_length=500)
@@ -34,6 +36,7 @@ class AIModelUpdate(BaseModel):
 
 
 class AIModelResponse(BaseModel):
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
     id: int
     name: str
     provider: str
@@ -47,8 +50,6 @@ class AIModelResponse(BaseModel):
     accuracy_note: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
-
-    model_config = {"from_attributes": True}
 
 
 class AIModelListResponse(BaseModel):

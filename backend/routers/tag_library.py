@@ -34,9 +34,9 @@ async def list_tag_library(
     支持按维度过滤
     """
     try:
-        items, total = await tag_library_service.list_entries(
+        items, total = await tag_library_service.list_tag_library(
             db=db,
-            dimension=dimension,
+            dimension_filter=dimension,
             page=page,
             page_size=page_size,
         )
@@ -59,7 +59,7 @@ async def get_grouped_tags(
     返回格式: { "genre": [...], "style": [...], ... }
     """
     try:
-        grouped = await tag_library_service.get_grouped_by_dimension(db)
+        grouped = await tag_library_service.get_all_tags_by_dimension(db)
         return grouped
 
     except Exception as e:
@@ -79,7 +79,10 @@ async def create_tag_library_entry(
     向标签库中添加一个新标签
     """
     try:
-        entry = await tag_library_service.create_entry(db, data)
+        entry = await tag_library_service.create_tag_library_entry(
+            db, name=data.name, dimension=data.dimension,
+            description=data.description, sort_order=data.sort_order
+        )
         await db.commit()
         await db.refresh(entry)
         return entry
@@ -103,7 +106,9 @@ async def batch_create_tag_library(
     批量向标签库中添加多个标签
     """
     try:
-        entries = await tag_library_service.batch_create_entries(db, data.tags)
+        entries = await tag_library_service.batch_create(
+            db, [t.model_dump() for t in data.tags]
+        )
         await db.commit()
         return entries
 
@@ -127,7 +132,8 @@ async def update_tag_library_entry(
     更新标签库中的指定条目
     """
     try:
-        entry = await tag_library_service.update_entry(db, entry_id, data)
+        update_data = data.model_dump(exclude_unset=True)
+        entry = await tag_library_service.update_tag_library_entry(db, entry_id, **update_data)
         if not entry:
             raise HTTPException(
                 status_code=404,
@@ -156,7 +162,7 @@ async def delete_tag_library_entry(
     从标签库中删除指定条目
     """
     try:
-        success = await tag_library_service.delete_entry(db, entry_id)
+        success = await tag_library_service.delete_tag_library_entry(db, entry_id)
         if not success:
             raise HTTPException(
                 status_code=404,

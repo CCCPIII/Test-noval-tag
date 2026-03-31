@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_db, get_current_user
+from backend.core.dependencies import get_db, get_redis, get_current_user
 from backend.schemas.tag import (
     TagResponse,
     TagAssign,
@@ -38,6 +38,7 @@ async def generate_tags(
     novel_id: int,
     request: TagGenerateRequest,
     db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -58,6 +59,7 @@ async def generate_tags(
         # 调用标签生成服务
         result = await tag_service.generate_tags(
             db=db,
+            redis=redis,
             novel_id=novel_id,
             model_id=request.model_id,
         )
@@ -91,7 +93,7 @@ async def get_novel_tags(
                 detail=f"小说不存在（ID: {novel_id}）",
             )
 
-        tags = await tag_service.get_tags_by_novel(db, novel_id)
+        tags = await tag_service.get_novel_tags(db, novel_id)
         return tags
 
     except HTTPException:

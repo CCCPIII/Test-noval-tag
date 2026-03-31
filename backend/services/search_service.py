@@ -47,14 +47,14 @@ async def _build_search_result(novels: list, db: AsyncSession) -> list:
         tags = tag_result.scalars().all()
 
         results.append({
-            "id": novel.id,
+            "novel_id": novel.id,
             "title": novel.title,
             "author": novel.author,
             "char_count": novel.char_count,
             "status": novel.status,
             "upload_time": novel.upload_time,
             "summary_preview": summary_preview,
-            "tags": [{"id": t.id, "name": t.name, "dimension": t.dimension} for t in tags],
+            "tags": [t.name for t in tags],
         })
 
     return results

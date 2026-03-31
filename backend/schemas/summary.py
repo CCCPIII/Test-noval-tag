@@ -6,6 +6,7 @@ from typing import Optional
 
 class SummaryRequest(BaseModel):
     """生成总结请求"""
+    model_config = {"protected_namespaces": ()}
     target_length: int = Field(100, ge=50, le=300, description="目标总结长度（字数）")
     model_id: Optional[int] = Field(None, description="指定AI模型ID，不指定则使用默认模型")
 
@@ -26,7 +27,7 @@ class SummaryResponse(BaseModel):
     chunk_index: Optional[int] = None
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
 
 
 class ChunkProgressResponse(BaseModel):

@@ -31,6 +31,7 @@ async def generate_summary(
     novel_id: int,
     request: SummaryRequest,
     db: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -51,6 +52,7 @@ async def generate_summary(
         # 调用总结服务生成总结
         summary = await summary_service.generate_summary(
             db=db,
+            redis=redis,
             novel_id=novel_id,
             target_length=request.target_length,
             model_id=request.model_id,
@@ -86,7 +88,7 @@ async def get_novel_summaries(
             )
 
         # 获取总结列表
-        summaries = await summary_service.get_summaries_by_novel(db, novel_id)
+        summaries = await summary_service.get_summaries(db, novel_id)
         return summaries
 
     except HTTPException:

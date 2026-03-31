@@ -45,6 +45,7 @@ class TagBatchAssign(BaseModel):
 
 class TagGenerateRequest(BaseModel):
     """AI生成标签请求"""
+    model_config = {"protected_namespaces": ()}
     model_id: Optional[int] = Field(None, description="指定AI模型ID")
 
 

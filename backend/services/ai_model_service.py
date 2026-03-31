@@ -114,10 +114,11 @@ async def delete_model(db: AsyncSession, model_id: int) -> bool:
     return True
 
 
-async def list_models(db: AsyncSession, active_only: bool = False) -> list:
+async def list_models(db: AsyncSession, active_only: bool = False) -> tuple:
     """
     查询 AI 模型列表
     可选择仅返回启用状态的模型
+    返回 (items, total)
     """
     stmt = select(AIModel)
     if active_only:
@@ -125,7 +126,8 @@ async def list_models(db: AsyncSession, active_only: bool = False) -> list:
     stmt = stmt.order_by(AIModel.created_at.desc())
 
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    items = list(result.scalars().all())
+    return items, len(items)
 
 
 async def get_model(db: AsyncSession, model_id: int) -> Optional[AIModel]:

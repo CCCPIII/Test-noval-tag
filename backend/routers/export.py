@@ -37,15 +37,19 @@ async def export_novel(
                 detail=f"小说不存在（ID: {novel_id}）",
             )
 
-        # 调用导出服务
-        result = await export_service.export_novel(
-            db=db,
-            novel_id=novel_id,
-            export_format=request.format,
-        )
+        # 调用导出服务（根据格式选择对应函数）
+        if request.format.value == "docx":
+            result = await export_service.export_novel_docx(db=db, novel_id=novel_id)
+        else:
+            result = await export_service.export_novel_txt(db=db, novel_id=novel_id)
 
-        file_path = result["file_path"]
-        file_name = result["file_name"]
+        if not result:
+            raise HTTPException(
+                status_code=500,
+                detail="导出文件生成失败",
+            )
+
+        file_path, file_name = result
 
         if not os.path.exists(file_path):
             raise HTTPException(
@@ -86,14 +90,19 @@ async def batch_export_novels(
     """
     try:
         # 调用批量导出服务
-        result = await export_service.batch_export_novels(
+        result = await export_service.batch_export(
             db=db,
             novel_ids=request.novel_ids,
-            export_format=request.format,
+            format=request.format.value,
         )
 
-        file_path = result["file_path"]
-        file_name = result["file_name"]
+        if not result:
+            raise HTTPException(
+                status_code=500,
+                detail="导出文件生成失败",
+            )
+
+        file_path, file_name = result
 
         if not os.path.exists(file_path):
             raise HTTPException(

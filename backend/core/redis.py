@@ -3,7 +3,7 @@ Redis 连接模块
 提供异步 Redis 连接的初始化、关闭和依赖注入
 """
 
-import aioredis
+import redis.asyncio as aioredis
 from typing import Optional
 
 from backend.core.config import settings
