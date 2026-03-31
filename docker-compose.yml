@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: novel-tag-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: novel_tag_db
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: novel-tag-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: novel-tag-backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: mysql+aiomysql://root:password@mysql:3306/novel_tag_db
+      REDIS_URL: redis://redis:6379/0
+      UPLOAD_DIR: /app/uploads
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - upload_data:/app/uploads
+
+volumes:
+  mysql_data:
+  redis_data:
+  upload_data:
