@@ -88,8 +88,8 @@ async def update_model(
     # 逐字段更新
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
-        if field == "api_key" and value is not None:
-            # API Key 需要加密后存储
+        if field == "api_key" and value:
+            # API Key 非空时才更新（空字符串表示不修改）
             model.api_key_encrypted = _encrypt_api_key(value)
         elif field != "api_key" and value is not None:
             setattr(model, field, value)
