@@ -30,6 +30,14 @@ async def lifespan(app: FastAPI):
     await init_redis()
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
+    # 自动初始化标签库种子数据
+    try:
+        from backend.services.tag_library_seed import seed_tag_library
+        await seed_tag_library()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"标签库种子数据初始化失败: {e}")
+
     yield
 
     await close_redis()
