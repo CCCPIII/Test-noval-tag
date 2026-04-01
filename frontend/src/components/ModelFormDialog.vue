@@ -11,11 +11,22 @@
       </el-form-item>
       <el-form-item label="提供商" required>
         <el-select v-model="form.provider" style="width: 100%">
-          <el-option label="OpenAI" value="openai" />
-          <el-option label="智谱AI" value="zhipu" />
-          <el-option label="本地模型" value="local" />
-          <el-option label="自定义" value="custom" />
+          <el-option label="OpenAI / DeepSeek / 千问 / 豆包 / 月之暗面（兼容格式）" value="openai" />
+          <el-option label="Anthropic Claude" value="claude" />
+          <el-option label="Google Gemini" value="gemini" />
+          <el-option label="智谱AI (ChatGLM)" value="zhipu" />
+          <el-option label="本地模型 (Ollama)" value="local" />
+          <el-option label="自定义（OpenAI兼容）" value="custom" />
         </el-select>
+      </el-form-item>
+      <el-form-item v-if="form.provider === 'openai'">
+        <el-alert type="info" :closable="false" show-icon>
+          <template #title>
+            <span style="font-size: 12px">
+              DeepSeek、通义千问、豆包、月之暗面、零一万物等国产模型都兼容 OpenAI 格式，选此项即可
+            </span>
+          </template>
+        </el-alert>
       </el-form-item>
       <el-form-item label="API地址" required>
         <el-input v-model="form.api_url" placeholder="https://api.openai.com/v1/chat/completions" />

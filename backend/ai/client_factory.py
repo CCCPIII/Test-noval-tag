@@ -4,14 +4,18 @@ from backend.ai.base_client import BaseAIClient
 from backend.ai.openai_client import OpenAIClient
 from backend.ai.zhipu_client import ZhipuClient
 from backend.ai.local_model_client import LocalModelClient
+from backend.ai.claude_client import ClaudeClient
+from backend.ai.gemini_client import GeminiClient
 
 
 # 提供商到客户端类的映射
 _CLIENT_MAP = {
-    "openai": OpenAIClient,
-    "zhipu": ZhipuClient,
-    "local": LocalModelClient,
-    "custom": OpenAIClient,  # 自定义模型默认使用OpenAI兼容格式
+    "openai": OpenAIClient,       # OpenAI 及所有兼容格式（DeepSeek、千问、豆包、月之暗面等）
+    "claude": ClaudeClient,       # Anthropic Claude
+    "gemini": GeminiClient,       # Google Gemini
+    "zhipu": ZhipuClient,         # 智谱 ChatGLM
+    "local": LocalModelClient,    # 本地模型（Ollama 等）
+    "custom": OpenAIClient,       # 自定义模型默认使用 OpenAI 兼容格式
 }
 
 
