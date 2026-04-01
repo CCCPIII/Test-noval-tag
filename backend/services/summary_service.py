@@ -52,21 +52,30 @@ async def _single_pass_summary(ai_model: Optional[AIModel], text: str, target_le
     """
     短文本单次摘要生成
     直接将全文发送给 AI 模型，获取目标长度的摘要
-
-    如果 AI 模型未配置，返回占位提示
     """
     if not ai_model:
-        return f"[AI 模型未配置] 这是一段占位摘要。原文共 {len(text)} 字，目标摘要长度 {target_length} 字。请先在系统中配置 AI 模型后重新生成。"
+        return f"[AI 模型未配置] 原文共 {len(text)} 字，目标摘要长度 {target_length} 字。请先在系统中配置 AI 模型后重新生成。"
 
     try:
-        # TODO: 根据 ai_model.provider 调用对应的 AI 接口
-        # 目前返回占位信息，待 AI 客户端工厂实现后替换
-        return (
-            f"[待接入AI] 模型: {ai_model.name}, "
-            f"原文长度: {len(text)} 字, "
-            f"目标摘要: {target_length} 字。"
-            f"请配置真实 AI 接口后重新生成摘要。"
+        from backend.ai.client_factory import create_ai_client
+        from backend.ai.prompts import SUMMARY_PROMPT
+        from backend.services.ai_model_service import _decrypt_api_key
+
+        # 解密 API Key
+        api_key = None
+        if ai_model.api_key_encrypted:
+            api_key = _decrypt_api_key(ai_model.api_key_encrypted)
+
+        client = create_ai_client(
+            provider=ai_model.provider,
+            api_url=ai_model.api_url,
+            api_key=api_key,
+            model_identifier=ai_model.model_identifier,
+            max_tokens=ai_model.max_tokens,
         )
+        prompt = SUMMARY_PROMPT.format(text=text[:16000], length=target_length)
+        result = await client.generate_text(prompt, max_tokens=target_length * 3)
+        return result
     except Exception as e:
         logger.error(f"AI 摘要生成失败: {e}")
         return f"[摘要生成失败] 错误信息: {str(e)}"
