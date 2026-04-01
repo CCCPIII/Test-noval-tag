@@ -2,6 +2,55 @@
   <div class="page-container">
     <h2 class="page-title">AI模型管理</h2>
 
+    <!-- 配置指南 -->
+    <el-collapse v-model="guideOpen" style="margin-bottom: 20px">
+      <el-collapse-item name="guide">
+        <template #title>
+          <el-icon style="margin-right: 6px"><InfoFilled /></el-icon>
+          <strong>模型配置指南</strong>
+          <el-tag size="small" type="info" style="margin-left: 8px">点击展开查看支持的模型和配置方式</el-tag>
+        </template>
+        <div class="guide-content">
+          <p style="margin-bottom: 12px; color: #606266">
+            系统支持主流 AI 模型，添加模型时选择对应的<strong>提供商</strong>，填入 API 地址、密钥和模型标识即可。
+            大部分国产模型都兼容 OpenAI 格式，提供商选 <el-tag size="small">OpenAI / 兼容格式</el-tag> 即可。
+          </p>
+          <el-table :data="guideData" stripe size="small" :show-header="true" style="width: 100%">
+            <el-table-column prop="name" label="模型" width="120" />
+            <el-table-column prop="provider" label="提供商选择" width="160">
+              <template #default="{ row }">
+                <el-tag size="small" :type="row.providerType || ''">{{ row.provider }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="apiUrl" label="API 地址" min-width="280">
+              <template #default="{ row }">
+                <code style="font-size: 12px; color: #409eff; word-break: break-all">{{ row.apiUrl }}</code>
+              </template>
+            </el-table-column>
+            <el-table-column prop="modelId" label="模型标识示例" width="180">
+              <template #default="{ row }">
+                <code style="font-size: 12px">{{ row.modelId }}</code>
+              </template>
+            </el-table-column>
+            <el-table-column prop="keySource" label="密钥获取" width="160">
+              <template #default="{ row }">
+                <span style="font-size: 12px; color: #909399">{{ row.keySource }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="margin-top: 12px; padding: 10px; background: #f5f7fa; border-radius: 4px; font-size: 13px; color: #606266">
+            <p><strong>提示：</strong></p>
+            <ul style="margin: 4px 0 0 16px; line-height: 1.8">
+              <li>API 地址填到 <code>/v1</code> 即可，系统会自动补全完整路径</li>
+              <li>添加后点击「测试」按钮验证连接是否正常</li>
+              <li>可同时添加多个模型，在生成总结/标签时选择使用哪个</li>
+              <li>如果模型不在上表中，但兼容 OpenAI 格式，提供商选「OpenAI / 兼容格式」即可</li>
+            </ul>
+          </div>
+        </div>
+      </el-collapse-item>
+    </el-collapse>
+
     <div class="content-card">
       <div class="toolbar">
         <span style="color: #909399">管理解析模型及API配置，用户可自由选择模型进行小说解析</span>
@@ -74,8 +123,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { InfoFilled } from '@element-plus/icons-vue'
 import { getModels, deleteModel, testModel, updateModel } from '@/api/aiModel'
 import ModelFormDialog from '@/components/ModelFormDialog.vue'
+
+const guideOpen = ref([])
+const guideData = [
+  { name: 'DeepSeek', provider: 'OpenAI / 兼容格式', providerType: '', apiUrl: 'https://api.deepseek.com/v1', modelId: 'deepseek-chat', keySource: 'platform.deepseek.com' },
+  { name: '通义千问', provider: 'OpenAI / 兼容格式', providerType: '', apiUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', modelId: 'qwen-turbo / qwen-plus', keySource: 'dashscope.console.aliyun.com' },
+  { name: '豆包', provider: 'OpenAI / 兼容格式', providerType: '', apiUrl: 'https://ark.cn-beijing.volces.com/api/v3', modelId: '你的模型端点 ID', keySource: 'console.volcengine.com' },
+  { name: '月之暗面 Kimi', provider: 'OpenAI / 兼容格式', providerType: '', apiUrl: 'https://api.moonshot.cn/v1', modelId: 'moonshot-v1-8k', keySource: 'platform.moonshot.cn' },
+  { name: '零一万物', provider: 'OpenAI / 兼容格式', providerType: '', apiUrl: 'https://api.lingyiwanwu.com/v1', modelId: 'yi-large', keySource: 'platform.01.ai' },
+  { name: 'OpenAI', provider: 'OpenAI / 兼容格式', providerType: '', apiUrl: 'https://api.openai.com/v1', modelId: 'gpt-4o-mini', keySource: 'platform.openai.com' },
+  { name: 'Claude', provider: 'Anthropic Claude', providerType: 'warning', apiUrl: 'https://api.anthropic.com/v1', modelId: 'claude-sonnet-4-20250514', keySource: 'console.anthropic.com' },
+  { name: 'Gemini', provider: 'Google Gemini', providerType: 'success', apiUrl: '留空使用默认地址', modelId: 'gemini-2.0-flash', keySource: 'aistudio.google.com' },
+  { name: '智谱 ChatGLM', provider: '智谱AI', providerType: 'danger', apiUrl: '留空使用默认地址', modelId: 'glm-4', keySource: 'open.bigmodel.cn' },
+]
 
 const models = ref([])
 const loading = ref(false)
