@@ -65,24 +65,56 @@ async def _call_ai_for_tags(ai_model: Optional[AIModel], text: str) -> List[dict
     """
     调用 AI 模型提取标签
     返回格式: [{"name": "...", "dimension": "...", "confidence": 0.9}, ...]
-
-    如果 AI 未配置，返回占位标签
     """
     if not ai_model:
-        # AI 未配置时返回占位标签
         return [
             {"name": "待生成", "dimension": "genre", "confidence": 0.0},
             {"name": "待生成", "dimension": "style", "confidence": 0.0},
         ]
 
     try:
-        # TODO: 根据 ai_model.provider 调用对应的 AI 接口
-        # 提示词应要求 AI 按维度返回 JSON 格式的标签列表
-        # 目前返回占位数据
-        return [
-            {"name": "待接入AI", "dimension": "genre", "confidence": 0.0},
-            {"name": "待接入AI", "dimension": "style", "confidence": 0.0},
-        ]
+        from backend.ai.client_factory import create_ai_client
+        from backend.ai.prompts import DIMENSION_PROMPT_MAP
+        from backend.services.ai_model_service import _decrypt_api_key
+        from backend.models.tag_library import TagLibrary
+
+        # 解密 API Key
+        api_key = None
+        if ai_model.api_key_encrypted:
+            api_key = _decrypt_api_key(ai_model.api_key_encrypted)
+
+        client = create_ai_client(
+            provider=ai_model.provider,
+            api_url=ai_model.api_url,
+            api_key=api_key,
+            model_identifier=ai_model.model_identifier,
+            max_tokens=ai_model.max_tokens,
+        )
+
+        all_tags = []
+        truncated_text = text[:16000]
+
+        for dimension, prompt_template in DIMENSION_PROMPT_MAP.items():
+            try:
+                tag_library_ref = ""
+                prompt = prompt_template.format(
+                    text=truncated_text,
+                    tag_library=tag_library_ref,
+                )
+                result = await client.generate_text(prompt, max_tokens=500)
+                # 解析逗号分隔的标签
+                tag_names = [t.strip() for t in result.split(",") if t.strip()]
+                for name in tag_names[:3]:
+                    all_tags.append({
+                        "name": name,
+                        "dimension": dimension,
+                        "confidence": 0.8,
+                    })
+            except Exception as e:
+                logger.warning(f"维度 {dimension} 标签生成失败: {e}")
+                continue
+
+        return all_tags
     except Exception as e:
         logger.error(f"AI 标签生成失败: {e}")
         return []
