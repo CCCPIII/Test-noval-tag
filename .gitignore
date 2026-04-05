@@ -12,6 +12,7 @@ node_modules/
 *.log
 uploads/
 *.sqlite3
+*.db
 .idea/
 .vscode/
 frontend/dist/
