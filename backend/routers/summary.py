@@ -57,6 +57,11 @@ async def generate_summary(
             target_length=request.target_length,
             model_id=request.model_id,
         )
+        if not summary:
+            raise HTTPException(
+                status_code=400,
+                detail="无法生成总结：小说文本内容为空，请确认文件已正确上传",
+            )
         await db.commit()
         await db.refresh(summary)
         return summary
@@ -148,6 +153,11 @@ async def get_summary_progress(
     """
     try:
         # 从 Redis 获取进度信息
+        if not redis:
+            raise HTTPException(
+                status_code=404,
+                detail="进度查询不可用（Redis 未配置）",
+            )
         progress_key = f"summary_progress:{novel_id}"
         progress_data = await redis.get(progress_key)
 

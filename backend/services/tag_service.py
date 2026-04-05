@@ -341,3 +341,59 @@ async def get_novel_tags(db: AsyncSession, novel_id: int) -> list:
         })
 
     return tags
+
+
+async def batch_assign_tags(
+    db: AsyncSession,
+    novel_id: int,
+    tags: list,
+) -> list:
+    """
+    批量为小说分配标签
+    """
+    results = []
+    for tag_data in tags:
+        result = await assign_tag(
+            db=db,
+            novel_id=novel_id,
+            tag_id=tag_data.tag_id,
+            is_manual=tag_data.is_manual,
+            is_controversial=tag_data.is_controversial,
+            controversy_note=tag_data.controversy_note,
+        )
+        if result:
+            results.append({
+                "tag_id": result.tag_id,
+                "tag_name": "",
+                "dimension": "",
+                "confidence": result.confidence,
+                "is_manual": result.is_manual,
+                "is_controversial": result.is_controversial,
+                "controversy_note": result.controversy_note,
+            })
+    return results
+
+
+async def update_controversy(
+    db: AsyncSession,
+    novel_id: int,
+    tag_id: int,
+    is_controversial: bool,
+    controversy_note: Optional[str] = None,
+) -> Optional[NovelTag]:
+    """
+    更新标签的争议状态
+    """
+    stmt = select(NovelTag).where(
+        and_(NovelTag.novel_id == novel_id, NovelTag.tag_id == tag_id)
+    )
+    result = await db.execute(stmt)
+    novel_tag = result.scalar_one_or_none()
+    if not novel_tag:
+        return None
+
+    novel_tag.is_controversial = is_controversial
+    novel_tag.controversy_note = controversy_note
+    await db.flush()
+    await db.refresh(novel_tag)
+    return novel_tag

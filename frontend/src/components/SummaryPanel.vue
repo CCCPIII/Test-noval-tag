@@ -76,9 +76,9 @@ const savingEdit = ref(false)
 const aiModels = ref([])
 
 const currentSummary = computed(() => {
-  // 获取最新的非分段总结
+  // 获取最新的非分段总结（列表已按 created_at 降序排列，第一个即最新）
   const full = props.summaries.filter(s => !s.is_chunk_summary)
-  return full.length > 0 ? full[full.length - 1] : null
+  return full.length > 0 ? full[0] : null
 })
 
 async function handleGenerate() {
