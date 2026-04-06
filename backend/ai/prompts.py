@@ -112,3 +112,22 @@ DIMENSION_PROMPT_MAP = {
     "character": TAG_CHARACTER_PROMPT,
     "exclusive": TAG_EXCLUSIVE_PROMPT,
 }
+
+# 一次性生成所有维度标签的合并提示词（减少 API 调用次数）
+TAG_ALL_DIMENSIONS_PROMPT = """你是一位专业的小说分类与分析专家。请根据以下小说文本，从5个维度分析并生成标签。
+
+参考标签库：{tag_library}
+
+要求：
+1. 每个维度选择1-3个最贴合的标签
+2. 优先从参考标签库中选择，如无匹配可自拟
+3. 专属标签需体现这部小说独特性，每个控制在4个字以内
+4. 严格按照指定 JSON 格式输出，不要输出其他内容
+
+输出格式（JSON）：
+{{"genre": ["标签1", "标签2"], "style": ["标签1", "标签2"], "element": ["标签1", "标签2", "标签3"], "character": ["标签1", "标签2"], "exclusive": ["标签1", "标签2"]}}
+
+小说文本：
+{text}
+
+请直接输出 JSON："""

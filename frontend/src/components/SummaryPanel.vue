@@ -14,6 +14,14 @@
       </el-button>
     </div>
 
+    <!-- 生成进度 -->
+    <div v-if="generating" style="margin-bottom: 16px">
+      <el-progress :percentage="genProgress" :stroke-width="16" striped striped-flow :duration="8" />
+      <span style="color: #909399; font-size: 12px; margin-top: 4px; display: block">
+        {{ genProgressText }}
+      </span>
+    </div>
+
     <!-- 总结内容展示 -->
     <div v-if="currentSummary">
       <div v-if="!editing" style="line-height: 1.8; color: #303133; padding: 12px; background: #fafafa; border-radius: 6px">
@@ -74,6 +82,9 @@ const editing = ref(false)
 const editContent = ref('')
 const savingEdit = ref(false)
 const aiModels = ref([])
+const genProgress = ref(0)
+const genProgressText = ref('')
+let genTimer = null
 
 const currentSummary = computed(() => {
   // 获取最新的非分段总结（列表已按 created_at 降序排列，第一个即最新）
@@ -83,15 +94,41 @@ const currentSummary = computed(() => {
 
 async function handleGenerate() {
   generating.value = true
+  genProgress.value = 0
+  genProgressText.value = '正在调用 AI 生成总结...'
+
+  const startTime = Date.now()
+  const estimatedMs = 12000
+  genTimer = setInterval(() => {
+    const elapsed = Date.now() - startTime
+    const pct = Math.min(90, Math.round((elapsed / estimatedMs) * 90))
+    genProgress.value = pct
+    const remaining = Math.max(1, Math.round((estimatedMs - elapsed) / 1000))
+    if (pct < 40) {
+      genProgressText.value = '正在调用 AI 生成总结...'
+    } else if (pct < 70) {
+      genProgressText.value = `AI 正在分析并生成摘要，预计还需 ${remaining} 秒...`
+    } else {
+      genProgressText.value = `即将完成，预计还需 ${remaining} 秒...`
+    }
+  }, 500)
+
   try {
     await generateSummary(props.novelId, {
       target_length: targetLength.value,
       model_id: selectedModelId.value
     })
+    genProgress.value = 100
+    genProgressText.value = '总结生成完成！'
     ElMessage.success('总结生成完成')
     emit('refresh')
   } catch { /* handled */ } finally {
-    generating.value = false
+    clearInterval(genTimer)
+    genTimer = null
+    setTimeout(() => {
+      generating.value = false
+      genProgress.value = 0
+    }, 1000)
   }
 }
 

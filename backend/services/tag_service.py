@@ -63,7 +63,7 @@ async def _extract_or_create_tag(
 
 async def _call_ai_for_tags(ai_model: Optional[AIModel], text: str) -> List[dict]:
     """
-    调用 AI 模型提取标签
+    调用 AI 模型提取标签（单次调用，生成所有维度）
     返回格式: [{"name": "...", "dimension": "...", "confidence": 0.9}, ...]
     """
     if not ai_model:
@@ -74,9 +74,8 @@ async def _call_ai_for_tags(ai_model: Optional[AIModel], text: str) -> List[dict
 
     try:
         from backend.ai.client_factory import create_ai_client
-        from backend.ai.prompts import DIMENSION_PROMPT_MAP
+        from backend.ai.prompts import TAG_ALL_DIMENSIONS_PROMPT
         from backend.services.ai_model_service import _decrypt_api_key
-        from backend.models.tag_library import TagLibrary
 
         # 解密 API Key
         api_key = None
@@ -91,28 +90,49 @@ async def _call_ai_for_tags(ai_model: Optional[AIModel], text: str) -> List[dict
             max_tokens=ai_model.max_tokens,
         )
 
-        all_tags = []
         truncated_text = text[:16000]
+        tag_library_ref = ""
+        prompt = TAG_ALL_DIMENSIONS_PROMPT.format(
+            text=truncated_text,
+            tag_library=tag_library_ref,
+        )
+        result = await client.generate_text(prompt, max_tokens=1000)
 
-        for dimension, prompt_template in DIMENSION_PROMPT_MAP.items():
-            try:
-                tag_library_ref = ""
-                prompt = prompt_template.format(
-                    text=truncated_text,
-                    tag_library=tag_library_ref,
-                )
-                result = await client.generate_text(prompt, max_tokens=500)
-                # 解析逗号分隔的标签
-                tag_names = [t.strip() for t in result.split(",") if t.strip()]
+        # 解析 JSON 响应
+        all_tags = []
+        try:
+            # 提取 JSON 部分（AI 可能在前后添加额外文本）
+            import re
+            json_match = re.search(r'\{[\s\S]*\}', result)
+            if json_match:
+                parsed = json.loads(json_match.group())
+            else:
+                parsed = json.loads(result)
+
+            valid_dims = {"genre", "style", "element", "character", "exclusive"}
+            for dimension, tag_names in parsed.items():
+                if dimension not in valid_dims:
+                    continue
+                if not isinstance(tag_names, list):
+                    tag_names = [str(tag_names)]
                 for name in tag_names[:3]:
-                    all_tags.append({
-                        "name": name,
-                        "dimension": dimension,
-                        "confidence": 0.8,
-                    })
-            except Exception as e:
-                logger.warning(f"维度 {dimension} 标签生成失败: {e}")
-                continue
+                    name = str(name).strip().strip('"').strip("'")
+                    if name:
+                        all_tags.append({
+                            "name": name,
+                            "dimension": dimension,
+                            "confidence": 0.85,
+                        })
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.warning(f"标签 JSON 解析失败，尝试逐行解析: {e}")
+            # 降级：按逗号分隔解析
+            tag_names = [t.strip() for t in result.split(",") if t.strip()]
+            for name in tag_names[:5]:
+                all_tags.append({
+                    "name": name,
+                    "dimension": "genre",
+                    "confidence": 0.5,
+                })
 
         return all_tags
     except Exception as e:
