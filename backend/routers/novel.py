@@ -184,7 +184,7 @@ async def submit_novel_text(
 async def list_novels(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
-    status: Optional[str] = Query(None, description="状态过滤（uploaded/processing/done/error）"),
+    status_filter: Optional[str] = Query(None, alias="status", description="状态过滤（uploaded/processing/done/error）"),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -197,7 +197,7 @@ async def list_novels(
             db=db,
             page=page,
             page_size=page_size,
-            status_filter=status,
+            status_filter=status_filter,
         )
         return NovelListResponse(
             total=total,
