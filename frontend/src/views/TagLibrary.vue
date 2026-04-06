@@ -84,7 +84,7 @@ const tagForm = ref({ name: '', description: '', sort_order: 0 })
 async function fetchTags() {
   loading.value = true
   try {
-    const data = await getTagLibrary({ dimension: activeDimension.value, page: 1, page_size: 500 })
+    const data = await getTagLibrary({ dimension: activeDimension.value, page: 1, page_size: 200 })
     tags.value = data.items || data
   } catch { /* handled */ } finally {
     loading.value = false
