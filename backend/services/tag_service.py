@@ -135,6 +135,7 @@ async def _call_ai_for_tags(ai_model: Optional[AIModel], text: str) -> List[dict
                 parsed = json.loads(result)
 
             valid_dims = {"genre", "style", "element", "character", "exclusive"}
+            seen_names = set()  # 跨维度去重
             for dimension, tag_names in parsed.items():
                 if dimension not in valid_dims:
                     continue
@@ -142,7 +143,8 @@ async def _call_ai_for_tags(ai_model: Optional[AIModel], text: str) -> List[dict
                     tag_names = [str(tag_names)]
                 for name in tag_names[:3]:
                     name = str(name).strip().strip('"').strip("'")
-                    if name:
+                    if name and name not in seen_names:
+                        seen_names.add(name)
                         all_tags.append({
                             "name": name,
                             "dimension": dimension,
