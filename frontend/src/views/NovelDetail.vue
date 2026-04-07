@@ -129,7 +129,7 @@ async function handleGenerateTags() {
 }
 
 function goSearchByTag(tag) {
-  router.push({ path: '/search', query: { mode: 'tag', tagIds: tag.tag_id } })
+  router.push({ path: '/search', query: { mode: 'tag', tagName: tag.tag_name } })
 }
 
 function formatCharCount(count) {

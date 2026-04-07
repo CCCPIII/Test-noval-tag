@@ -111,34 +111,36 @@ async def search_by_name(
 
 async def search_by_tags(
     db: AsyncSession,
-    tag_ids: List[int],
+    tag_names: List[str],
     match_all: bool = True,
     page: int = 1,
     page_size: int = 20,
 ) -> tuple:
     """
-    按标签组合搜索小说
+    按标签名称组合搜索小说
 
     Args:
         db: 数据库会话
-        tag_ids: 标签 ID 列表
+        tag_names: 标签名称列表
         match_all: True=必须包含所有指定标签（AND），False=包含任一即可（OR）
         page: 页码
         page_size: 每页数量
 
     Returns:
         (搜索结果列表, 总数)
-
-    实现思路：
-    - match_all=True 时使用 GROUP BY + HAVING COUNT = len(tag_ids) 取交集
-    - match_all=False 时使用 DISTINCT 取并集
     """
+    if not tag_names:
+        return [], 0
+
+    # 先根据标签名称查找对应的 tag_id
+    tag_id_stmt = select(Tag.id).where(Tag.name.in_(tag_names))
+    tag_id_result = await db.execute(tag_id_stmt)
+    tag_ids = [row[0] for row in tag_id_result.all()]
+
     if not tag_ids:
         return [], 0
 
     if match_all:
-        # 交集查询：小说必须包含所有指定标签
-        # SELECT novel_id FROM novel_tags WHERE tag_id IN (...) GROUP BY novel_id HAVING COUNT(DISTINCT tag_id) = N
         subquery = (
             select(NovelTag.novel_id)
             .where(NovelTag.tag_id.in_(tag_ids))
@@ -146,7 +148,6 @@ async def search_by_tags(
             .having(func.count(func.distinct(NovelTag.tag_id)) == len(tag_ids))
         ).subquery()
     else:
-        # 并集查询：小说包含任意一个指定标签即可
         subquery = (
             select(func.distinct(NovelTag.novel_id).label("novel_id"))
             .where(NovelTag.tag_id.in_(tag_ids))

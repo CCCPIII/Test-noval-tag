@@ -54,7 +54,7 @@ async def search_by_name(
 
 @router.get("/by-tags", response_model=SearchResponse, summary="按标签搜索小说")
 async def search_by_tags(
-    tag_ids: str = Query(..., description="标签ID列表，逗号分隔（如: 1,2,3）"),
+    tag_names: str = Query(..., description="标签名称列表，逗号分隔（如: 玄幻,重生,爽文）"),
     match_all: bool = Query(True, description="是否要求匹配所有标签"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
@@ -63,28 +63,21 @@ async def search_by_tags(
 ):
     """
     按标签搜索小说
-    - 支持多标签组合搜索
+    - 支持多标签组合搜索（按标签名称）
     - match_all=True 时要求匹配所有标签（AND），否则匹配任意标签（OR）
     """
-    # 解析标签ID列表
-    try:
-        tag_id_list = [int(tid.strip()) for tid in tag_ids.split(",") if tid.strip()]
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="tag_ids 参数格式错误，应为逗号分隔的整数（如: 1,2,3）",
-        )
+    tag_name_list = [name.strip() for name in tag_names.split(",") if name.strip()]
 
-    if not tag_id_list:
+    if not tag_name_list:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="至少需要提供一个标签ID",
+            detail="至少需要提供一个标签名称",
         )
 
     try:
         items, total = await search_service.search_by_tags(
             db=db,
-            tag_ids=tag_id_list,
+            tag_names=tag_name_list,
             match_all=match_all,
             page=page,
             page_size=page_size,

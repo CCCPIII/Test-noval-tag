@@ -91,10 +91,35 @@ async def _call_ai_for_tags(ai_model: Optional[AIModel], text: str) -> List[dict
         )
 
         truncated_text = text[:16000]
+
+        # 从数据库加载标签库作为 AI 参考
+        from backend.core.database import async_session
+        from backend.models.tag_library import TagLibrary
         tag_library_ref = ""
+        try:
+            async with async_session() as lib_session:
+                lib_result = await lib_session.execute(
+                    select(TagLibrary.dimension, TagLibrary.name)
+                    .order_by(TagLibrary.dimension, TagLibrary.sort_order)
+                )
+                lib_rows = lib_result.all()
+                dims = {}
+                for dim, name in lib_rows:
+                    if dim not in dims:
+                        dims[dim] = []
+                    dims[dim].append(name)
+                parts = []
+                dim_labels = {"genre": "题材", "style": "风格", "element": "元素", "character": "人物"}
+                for dim, names in dims.items():
+                    label = dim_labels.get(dim, dim)
+                    parts.append(f"{label}({dim}): {', '.join(names)}")
+                tag_library_ref = "\n".join(parts)
+        except Exception:
+            pass
+
         prompt = TAG_ALL_DIMENSIONS_PROMPT.format(
             text=truncated_text,
-            tag_library=tag_library_ref,
+            tag_library=tag_library_ref if tag_library_ref else "（无预置标签库）",
         )
         result = await client.generate_text(prompt, max_tokens=1000)
 

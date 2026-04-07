@@ -25,7 +25,7 @@
         <el-tab-pane label="标签搜索" name="tag">
           <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap">
             <el-select
-              v-model="selectedTagIds"
+              v-model="selectedTagNames"
               multiple
               filterable
               placeholder="选择标签..."
@@ -38,9 +38,9 @@
               >
                 <el-option
                   v-for="tag in tags"
-                  :key="tag.id"
+                  :key="tag.name"
                   :label="tag.name"
-                  :value="tag.id"
+                  :value="tag.name"
                 />
               </el-option-group>
             </el-select>
@@ -104,7 +104,7 @@ const tagStore = useTagLibraryStore()
 const searchMode = ref('name')
 const nameKeyword = ref('')
 const exactMatch = ref(false)
-const selectedTagIds = ref([])
+const selectedTagNames = ref([])
 const matchAll = ref(true)
 const results = ref([])
 const total = ref(0)
@@ -132,12 +132,12 @@ async function doNameSearch() {
 }
 
 async function doTagSearch() {
-  if (selectedTagIds.value.length === 0) return
+  if (selectedTagNames.value.length === 0) return
   searching.value = true
   hasSearched.value = true
   try {
     const data = await searchByTags({
-      tag_ids: selectedTagIds.value.join(','),
+      tag_names: selectedTagNames.value.join(','),
       match_all: matchAll.value,
       page: page.value,
       page_size: pageSize.value
@@ -164,7 +164,7 @@ function formatCount(n) {
 }
 
 function dimensionLabel(dim) {
-  const map = { genre: '题材', style: '风格', element: '核心元素', character: '人物类型' }
+  const map = { genre: '题材', style: '风格', element: '核心元素', character: '人物类型', exclusive: '专属标签' }
   return map[dim] || dim
 }
 
@@ -172,9 +172,9 @@ onMounted(async () => {
   await tagStore.fetchGroupedTags()
   groupedTags.value = tagStore.groupedTags
   // 从URL参数恢复搜索状态
-  if (route.query.mode === 'tag' && route.query.tagIds) {
+  if (route.query.mode === 'tag' && route.query.tagName) {
     searchMode.value = 'tag'
-    selectedTagIds.value = [Number(route.query.tagIds)]
+    selectedTagNames.value = [route.query.tagName]
     doTagSearch()
   }
 })
