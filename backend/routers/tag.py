@@ -14,7 +14,6 @@ from backend.schemas.tag import (
     TagAssign,
     TagBatchAssign,
     TagGenerateRequest,
-    TagGenerateResponse,
 )
 from backend.schemas.novel import NovelTagResponse
 from backend.services import novel_service, tag_service
@@ -30,7 +29,7 @@ class ControversyUpdate(BaseModel):
 
 @router.post(
     "/{novel_id}/tags/generate",
-    response_model=TagGenerateResponse,
+    response_model=list[NovelTagResponse],
     status_code=status.HTTP_201_CREATED,
     summary="AI 生成标签",
 )
@@ -45,7 +44,7 @@ async def generate_tags(
     调用 AI 为指定小说自动生成标签
     - 校验小说是否存在
     - 调用 tag_service 生成标签
-    - 返回生成的标签列表（含专属标签）
+    - 返回生成的标签列表
     """
     try:
         # 校验小说是否存在
@@ -63,6 +62,12 @@ async def generate_tags(
             novel_id=novel_id,
             model_id=request.model_id,
         )
+        if not result:
+            raise HTTPException(
+                status_code=400,
+                detail="无法生成标签：小说文本内容为空，请确认文件已正确上传",
+            )
+        await db.commit()
         return result
 
     except HTTPException:

@@ -1,64 +1,134 @@
-# AI小说总结与标签生成系统
+# AI 小说总结与标签生成系统
 
-基于 **FastAPI + Vue 3 + Element Plus** 的AI小说内容分析平台，自动生成小说总结和多维度标签，支持百万字级超长篇小说处理。
+> 基于大语言模型的小说内容智能分析平台，支持自动生成摘要、多维度标签提取、标签库管理，适配 DeepSeek / Claude / Gemini / 通义千问等 9 种主流 AI 模型。
 
 ---
 
-## 功能特性
+## 项目背景与价值
 
-### 核心功能
-- **文件上传与解析** — 支持 TXT、PDF 格式，单文件最大 200MB，批量上传最多 10 个
-- **AI总结生成** — 可配置长度（50-300字），超长篇自动分段处理后合并
-- **多维度标签生成** — 题材、风格、核心元素、人物类型 4 大维度 + 1-2 个专属标签
-- **传统标签库** — 预置 70+ 标签，支持人工补充，AI 生成时自动参考
-- **争议标签** — 可标记争议标签并添加悬浮解释说明
-- **智能去重** — SHA-256 文件哈希比对，避免重复上传和处理
-- **双模式搜索** — 名称搜索（精准/模糊）+ 标签搜索（单个/多标签组合）
-- **结果导出** — 支持 TXT、Word 格式导出，支持批量导出
+网络文学行业每年产出海量作品，编辑和运营人员需要快速了解一部小说的核心剧情、风格定位和受众画像。传统人工阅读效率低、标准不统一、成本高。
 
-### 扩展功能
-- **AI模型管理** — 支持配置多个AI模型（OpenAI、智谱AI、本地模型等），自由切换
-- **用户模块（预留）** — 登录、收藏、个人中心接口已预留，待后续开发
-- **超长篇优化** — 分段解析、分段总结、进度实时展示，适配百万字级小说
+本系统通过接入大语言模型，实现 **一键生成结构化摘要和多维度标签**，将一部数十万字小说的内容分析时间从数小时缩短至数秒，同时保证输出标签与运营标签体系一致。
+
+**核心指标：**
+- 摘要生成：~3 秒 / 篇（短文本单次生成）
+- 标签提取：~3 秒 / 篇（5 维度单次 AI 调用）
+- 支持百万字级长篇小说分块处理
+
+---
+
+## 核心功能
+
+### 1. 智能摘要生成
+
+- 支持 **50-300 字**自定义目标长度
+- 短文本（<8000字）直接生成；长文本自动 **分块 → 逐块摘要 → 合并精炼**
+- 摘要支持人工编辑修正，保留完整历史版本
+- 生成过程显示 **动态进度条** 和预估剩余时间
+
+### 2. 多维度标签提取
+
+| 维度 | 说明 | 示例 |
+|------|------|------|
+| 题材 (genre) | 小说类型分类 | 玄幻、都市、悬疑、末世 |
+| 风格 (style) | 写作风格特征 | 爽文、慢热、硬核、扮猪吃虎 |
+| 元素 (element) | 核心情节元素 | 系统、重生、升级、金手指 |
+| 人物 (character) | 角色类型标签 | 废柴逆袭、兵王、腹黑、女强 |
+| 专属 (exclusive) | 本作独特标签 | 龙血觉醒、逆天武道 |
+
+- 单次 AI 调用生成全部 5 个维度标签（JSON 格式解析）
+- 标签带 **置信度评分**，低置信度自动标记为「争议标签」供人工复核
+- 支持手动分配、批量分配、一键移除
+
+### 3. 预置标签库（141 条）
+
+- 内置覆盖 **男频 + 女频** 主流分类的预置标签
+- 按维度分组管理，支持增删改查和批量导入
+- AI 生成标签时自动参考标签库，确保与运营体系一致
+- 应用启动时自动填充，无需手动初始化
+
+### 4. 多模型适配（9 种 AI 服务）
+
+通过统一的 **Client Factory 模式**，一个接口适配所有主流 AI 模型：
+
+| 提供商 | 模型示例 | 协议 |
+|--------|---------|------|
+| DeepSeek | deepseek-chat / deepseek-reasoner | OpenAI 兼容 |
+| OpenAI | gpt-4o / gpt-4o-mini | OpenAI 原生 |
+| Anthropic | claude-sonnet-4-20250514 | Claude Messages API |
+| Google | gemini-2.0-flash | Gemini REST API |
+| 通义千问 | qwen-turbo / qwen-plus | OpenAI 兼容 |
+| 豆包 (字节) | doubao-pro-32k | OpenAI 兼容 |
+| 月之暗面 | moonshot-v1-8k | OpenAI 兼容 |
+| 智谱 AI | glm-4 | ChatGLM API |
+| 本地模型 | Ollama / vLLM | OpenAI 兼容 |
+
+- 内置配置指南页面，指导用户填写各模型参数
+- 支持 **连接测试**，一键验证 API 是否可用
+- API Key **Fernet 加密存储**，运行时解密调用
+
+### 5. 文件处理与导出
+
+- 支持 **TXT / PDF** 格式上传，自动编码检测（UTF-8、GBK 等）
+- SHA-256 文件哈希去重，防止重复导入
+- 导出支持 **JSON / TXT / DOCX** 格式，支持批量导出
+
+### 6. 搜索与检索
+
+- 按书名模糊搜索
+- 按标签组合检索（**AND / OR** 逻辑），快速定位同类作品
 
 ---
 
 ## 技术架构
 
 ```
-┌─────────────────────────────────────────────┐
-│                前端展示层                      │
-│         Vue 3 + Element Plus + Vite          │
-├─────────────────────────────────────────────┤
-│                后端服务层                      │
-│           Python + FastAPI (RESTful)          │
-├──────────────────┬──────────────────────────┤
-│    AI核心层       │      数据存储层            │
-│  多模型客户端     │   MySQL + Redis           │
-│  提示词模板       │   SQLAlchemy ORM          │
-└──────────────────┴──────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                    Frontend                           │
+│          Vue 3 + Element Plus + Pinia + Vite          │
+├──────────────────────────────────────────────────────┤
+│                    Backend                            │
+│      FastAPI + SQLAlchemy (Async) + Pydantic v2       │
+│              AI Client Factory 多模型适配层            │
+├──────────────────────────────────────────────────────┤
+│                    Storage                            │
+│     SQLite / MySQL (可切换)  ·  Redis (可选缓存)       │
+└──────────────────────────────────────────────────────┘
 ```
 
-### 后端模块
+### 后端关键设计
 
-| 目录 | 说明 |
-|------|------|
-| `backend/core/` | 配置管理、数据库连接、Redis连接、依赖注入 |
-| `backend/models/` | 7 个 ORM 模型（小说、总结、标签、标签库、AI模型、用户等） |
-| `backend/schemas/` | Pydantic 请求/响应模型 |
-| `backend/routers/` | 8 个 API 路由（小说、总结、标签、搜索、导出、AI模型等） |
-| `backend/services/` | 11 个业务服务（文件解析、分段处理、去重、搜索、导出等） |
-| `backend/ai/` | AI 客户端（OpenAI/智谱/本地）、提示词模板、工厂模式 |
-| `backend/utils/` | 加密工具、文件工具、分页工具 |
+- **全异步架构**：FastAPI + async SQLAlchemy + httpx，高并发无阻塞
+- **AI Client Factory 模式**：统一 `create_ai_client()` 接口，通过 `provider` 参数分发到 5 种客户端实现，新增模型仅需添加一个客户端文件
+- **API Key 加密存储**：Fernet 对称加密，密钥通过环境变量注入
+- **Redis 优雅降级**：未配置 Redis 时自动跳过缓存和进度追踪，不影响核心功能
+- **长文本分块策略**：超过 8000 字自动分块 → 逐块摘要 → 合并精炼，支持百万字级小说
 
-### 前端模块
+### 前端关键设计
 
-| 目录 | 说明 |
-|------|------|
-| `frontend/src/views/` | 7 个页面（列表、上传、详情、搜索、标签库、AI模型、用户） |
-| `frontend/src/components/` | 6 个复用组件（总结面板、标签展示/编辑、导出、进度条等） |
-| `frontend/src/api/` | 7 个 API 接口模块 |
-| `frontend/src/stores/` | Pinia 状态管理 |
+- **Vue 3 Composition API** + Pinia 集中式状态管理
+- **Element Plus** 组件库，完整中文本地化
+- **动态进度反馈**：总结 / 标签生成时显示条纹动画进度条和预估剩余时间
+- **Vue Router History 模式**：后端 fallback 到 `index.html` 支持 SPA 路由
+
+---
+
+## API 概览
+
+系统共提供 **36 个 RESTful API 端点**，按业务模块组织：
+
+| 模块 | 端点数 | 说明 |
+|------|--------|------|
+| 小说管理 | 5 | 文件上传、文本提交、列表、详情、删除 |
+| 摘要生成 | 4 | AI 生成、历史查询、人工编辑、进度查询 |
+| 标签管理 | 6 | AI 生成、手动分配、批量分配、移除、争议标记 |
+| 标签库 | 6 | 列表、分组、添加、批量添加、更新、删除 |
+| AI 模型 | 6 | 增删改查、连接测试 |
+| 搜索 | 2 | 按名称搜索、按标签检索 |
+| 导出 | 2 | 单本导出、批量导出 |
+| 用户 | 5 | 注册、登录、个人信息（预留扩展） |
+
+启动后访问 `/docs`（Swagger UI）或 `/redoc` 查看完整交互式 API 文档。
 
 ---
 
@@ -68,151 +138,120 @@
 
 - Python 3.11+
 - Node.js 18+
-- MySQL 8.0+（或 SQLite 用于本地测试）
-- Redis 7.0+
 
-### 1. 后端启动
+### 本地开发
 
 ```bash
-# 安装依赖
+# 克隆项目
+git clone https://github.com/cccpiii/test-noval-tag.git
+cd test-noval-tag
+
+# 后端启动
 pip install -r backend/requirements.txt
+uvicorn app:app --reload --port 8000
 
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 填入数据库地址、Redis地址等
-
-# 启动服务
-python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
-```
-
-### 2. 前端启动
-
-```bash
+# 前端启动（新终端）
 cd frontend
-
-# 安装依赖
 npm install
-
-# 开发模式启动
 npm run dev
-
-# 生产构建
-npm run build
 ```
 
-### 3. Docker 一键启动
+访问 `http://localhost:3000`，前端自动代理 API 请求到后端 8000 端口。
 
-```bash
-docker-compose up -d
-```
+### 环境变量
 
-自动启动 MySQL + Redis + 后端服务。
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `DATABASE_URL` | 数据库连接串 | `sqlite+aiosqlite:///./novel_tag.db` |
+| `REDIS_URL` | Redis 地址（留空则禁用） | `""` |
+| `SECRET_KEY` | Fernet 加密密钥 | 自动生成 |
+| `UPLOAD_DIR` | 文件上传目录 | `./uploads` |
+| `MAX_UPLOAD_SIZE_MB` | 单文件大小限制 | `200` |
 
-### 4. 初始化标签库
+### 部署到 Render（免费）
 
-```bash
-python -m scripts.seed_tag_library
-```
+项目已配置 `render.yaml`，支持一键部署：
 
-预置 70+ 常用小说标签（题材、风格、核心元素、人物类型）。
-
----
-
-## API 文档
-
-启动后端后访问：
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-### 主要接口
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/v1/novels/upload` | 上传小说文件 |
-| POST | `/api/v1/novels/text` | 提交小说文本 |
-| GET | `/api/v1/novels/` | 小说列表 |
-| GET | `/api/v1/novels/{id}` | 小说详情 |
-| POST | `/api/v1/novels/{id}/summary/generate` | 生成总结 |
-| POST | `/api/v1/novels/{id}/tags/generate` | 生成标签 |
-| GET | `/api/v1/search/by-name` | 名称搜索 |
-| GET | `/api/v1/search/by-tags` | 标签搜索 |
-| POST | `/api/v1/export/{id}` | 导出结果 |
-| GET | `/api/v1/tag-library/` | 标签库管理 |
-| GET | `/api/v1/ai-models/` | AI模型管理 |
+1. Fork 本仓库到你的 GitHub
+2. Render Dashboard → **New → Blueprint** → 选择仓库
+3. 自动执行 `build.sh`（安装依赖 + 构建前端 + 初始化标签库）
+4. 部署完成后在页面上配置 AI 模型即可使用
 
 ---
 
 ## 项目结构
 
 ```
-Test-noval-tag/
+├── app.py                        # 应用入口
+├── build.sh                      # 构建脚本
+├── render.yaml                   # Render 部署配置
+│
 ├── backend/
-│   ├── main.py                 # FastAPI 应用入口
+│   ├── main.py                   # FastAPI 初始化、生命周期、路由挂载
 │   ├── requirements.txt
-│   ├── core/                   # 核心配置
-│   ├── models/                 # 数据模型
-│   ├── schemas/                # 请求/响应模型
-│   ├── routers/                # API 路由
-│   ├── services/               # 业务逻辑
-│   ├── ai/                     # AI 模型集成
-│   └── utils/                  # 工具函数
-├── frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── src/
-│       ├── App.vue
-│       ├── main.js
-│       ├── router/             # 路由配置
-│       ├── api/                # API 接口
-│       ├── views/              # 页面组件
-│       ├── components/         # 复用组件
-│       ├── stores/             # 状态管理
-│       └── styles/             # 全局样式
-├── scripts/
-│   ├── init_db.sql             # 数据库初始化
-│   └── seed_tag_library.py     # 标签库种子数据
-├── docker-compose.yml
-├── .env.example
-└── .gitignore
+│   ├── ai/                       # AI 客户端层
+│   │   ├── client_factory.py     #   工厂模式统一创建客户端
+│   │   ├── openai_client.py      #   OpenAI / 兼容协议客户端
+│   │   ├── claude_client.py      #   Anthropic Claude 客户端
+│   │   ├── gemini_client.py      #   Google Gemini 客户端
+│   │   ├── zhipu_client.py       #   智谱 ChatGLM 客户端
+│   │   └── prompts.py            #   所有 AI 提示词模板
+│   ├── core/                     # 核心配置
+│   │   ├── config.py             #   环境变量与应用配置
+│   │   ├── database.py           #   异步数据库引擎与会话
+│   │   ├── redis.py              #   Redis 连接（优雅降级）
+│   │   └── dependencies.py       #   FastAPI 依赖注入
+│   ├── models/                   # ORM 模型（7 张表）
+│   │   ├── novel.py              #   小说
+│   │   ├── summary.py            #   摘要
+│   │   ├── tag.py                #   标签
+│   │   ├── novel_tag.py          #   小说-标签关联（含置信度）
+│   │   ├── tag_library.py        #   标签库
+│   │   ├── ai_model.py           #   AI 模型配置
+│   │   └── user.py               #   用户
+│   ├── routers/                  # API 路由（8 个模块）
+│   ├── schemas/                  # Pydantic 请求/响应模型
+│   └── services/                 # 业务逻辑层
+│       ├── summary_service.py    #   摘要生成（短文本 / 分块合并）
+│       ├── tag_service.py        #   标签生成与管理
+│       ├── tag_library_seed.py   #   141 条预置标签种子数据
+│       ├── chunking_service.py   #   文本分块策略
+│       ├── file_parser.py        #   TXT / PDF 文件解析
+│       ├── dedup_service.py      #   文件去重
+│       └── ai_model_service.py   #   AI 模型配置管理
+│
+└── frontend/
+    ├── package.json
+    ├── vite.config.js
+    └── src/
+        ├── views/                # 7 个页面
+        │   ├── NovelList.vue     #   小说列表
+        │   ├── NovelUpload.vue   #   上传页面
+        │   ├── NovelDetail.vue   #   详情（摘要 + 标签）
+        │   ├── SearchPage.vue    #   搜索
+        │   ├── TagLibrary.vue    #   标签库管理
+        │   └── AIModelManage.vue #   AI 模型配置
+        ├── components/           # 6 个复用组件
+        ├── api/                  # API 调用封装
+        ├── stores/               # Pinia 状态管理
+        └── router/               # 路由配置
 ```
 
 ---
 
-## 配置说明
+## 技术栈
 
-编辑 `.env` 文件：
-
-```env
-# 数据库（MySQL 或 SQLite）
-DATABASE_URL=mysql+aiomysql://root:password@localhost:3306/novel_tag_db
-# DATABASE_URL=sqlite+aiosqlite:///./novel_tag.db  # 本地测试用
-
-# Redis
-REDIS_URL=redis://localhost:6379/0
-
-# 文件上传
-UPLOAD_DIR=./uploads
-MAX_UPLOAD_SIZE_MB=200
-
-# AI 总结默认长度
-DEFAULT_SUMMARY_LENGTH=100
-
-# API Key 加密密钥
-ENCRYPTION_KEY=你的32位十六进制密钥
-
-# 分段处理配置（适配超长篇小说）
-CHUNK_SIZE=8000
-CHUNK_OVERLAP=500
-```
+| 层级 | 技术选型 |
+|------|---------|
+| **前端** | Vue 3 · Element Plus · Pinia · Axios · Vite |
+| **后端** | Python 3.11 · FastAPI · SQLAlchemy (Async) · Pydantic v2 · httpx |
+| **数据库** | SQLite（开发）/ MySQL（生产）· Redis（可选） |
+| **AI 接入** | OpenAI API · Anthropic API · Gemini API · 智谱 API · Ollama |
+| **安全** | Fernet 加密 · CORS · 文件类型校验 · 哈希去重 |
+| **部署** | Render · Uvicorn · 支持任意 Linux / Docker 环境 |
 
 ---
 
-## 开发说明
+## License
 
-- 后端遵循 **分层架构**：Router -> Service -> Model，模块间通过接口解耦
-- 前端使用 **Vue 3 Composition API** + **Element Plus** 组件库
-- 所有接口遵循 **RESTful** 规范，完整保留，便于后续移植到移动端/桌面端
-- AI 模型通过 **工厂模式** 封装，新增模型只需添加一个客户端文件
-- 超长篇处理采用 **分段解析 + 分段总结 + 合并** 策略
+MIT

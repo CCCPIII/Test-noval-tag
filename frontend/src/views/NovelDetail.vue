@@ -38,6 +38,12 @@
           <el-button type="primary" plain @click="handleGenerateTags" :loading="generatingTags">
             AI自动生成标签
           </el-button>
+          <div v-if="generatingTags" style="margin-top: 12px">
+            <el-progress :percentage="tagProgress" :stroke-width="16" striped striped-flow :duration="8" />
+            <span style="color: #909399; font-size: 12px; margin-top: 4px; display: block">
+              {{ tagProgressText }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -68,6 +74,9 @@ const novelTags = ref([])
 const loading = ref(false)
 const showExportDialog = ref(false)
 const generatingTags = ref(false)
+const tagProgress = ref(0)
+const tagProgressText = ref('')
+let tagTimer = null
 
 async function fetchDetail() {
   loading.value = true
@@ -83,12 +92,39 @@ async function fetchDetail() {
 
 async function handleGenerateTags() {
   generatingTags.value = true
+  tagProgress.value = 0
+  tagProgressText.value = '正在调用 AI 分析小说内容...'
+
+  // 模拟进度条（预估15秒完成）
+  const startTime = Date.now()
+  const estimatedMs = 15000
+  tagTimer = setInterval(() => {
+    const elapsed = Date.now() - startTime
+    const pct = Math.min(90, Math.round((elapsed / estimatedMs) * 90))
+    tagProgress.value = pct
+    const remaining = Math.max(1, Math.round((estimatedMs - elapsed) / 1000))
+    if (pct < 30) {
+      tagProgressText.value = '正在调用 AI 分析小说内容...'
+    } else if (pct < 60) {
+      tagProgressText.value = `AI 正在生成多维度标签，预计还需 ${remaining} 秒...`
+    } else {
+      tagProgressText.value = `即将完成，预计还需 ${remaining} 秒...`
+    }
+  }, 500)
+
   try {
     await generateTags(novel.value.id)
+    tagProgress.value = 100
+    tagProgressText.value = '标签生成完成！'
     ElMessage.success('标签生成完成')
     await fetchDetail()
   } catch { /* handled */ } finally {
-    generatingTags.value = false
+    clearInterval(tagTimer)
+    tagTimer = null
+    setTimeout(() => {
+      generatingTags.value = false
+      tagProgress.value = 0
+    }, 1000)
   }
 }
 
